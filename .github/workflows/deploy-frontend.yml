@@ -1,0 +1,73 @@
+name: Deploy Frontend to S3
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '18'
+
+jobs:
+  deploy:
+    name: Build and Deploy Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Create .env file
+        working-directory: ./frontend
+        run: |
+          cat > .env << EOF
+          REACT_APP_API_URL=${{ secrets.BOOKING_SERVICE_URL }}
+          REACT_APP_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
+          REACT_APP_COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
+          REACT_APP_COGNITO_REGION=${{ env.AWS_REGION }}
+          REACT_APP_COGNITO_DOMAIN=${{ secrets.COGNITO_DOMAIN }}
+          EOF
+
+      - name: Build React app
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync to S3
+        working-directory: ./frontend
+        run: |
+          aws s3 sync build/ s3://${{ secrets.FRONTEND_S3_BUCKET }} \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html" \
+            --exclude "*.map"
+          
+          # Upload index.html with no-cache
+          aws s3 cp build/index.html s3://${{ secrets.FRONTEND_S3_BUCKET }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: Deployment complete
+        run: |
+          echo "🚀 Frontend deployed successfully!"
+          echo "URL: http://${{ secrets.FRONTEND_S3_BUCKET }}.s3-website-${{ env.AWS_REGION }}.amazonaws.com"
