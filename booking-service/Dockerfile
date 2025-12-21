@@ -37,38 +37,34 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Install and configure nginx
 RUN apk add --no-cache nginx
 
-# Copy nginx configuration
-COPY <<EOF /etc/nginx/http.d/default.conf
-server {
-    listen 80;
-    index index.php index.html;
-    root /var/www/html/public;
-
-    location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass 127.0.0.1:9000;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-}
-EOF
+# Create nginx configuration
+RUN mkdir -p /etc/nginx/http.d && \
+    echo 'server {' > /etc/nginx/http.d/default.conf && \
+    echo '    listen 80;' >> /etc/nginx/http.d/default.conf && \
+    echo '    index index.php index.html;' >> /etc/nginx/http.d/default.conf && \
+    echo '    root /var/www/html/public;' >> /etc/nginx/http.d/default.conf && \
+    echo '' >> /etc/nginx/http.d/default.conf && \
+    echo '    location / {' >> /etc/nginx/http.d/default.conf && \
+    echo '        try_files $uri $uri/ /index.php?$query_string;' >> /etc/nginx/http.d/default.conf && \
+    echo '    }' >> /etc/nginx/http.d/default.conf && \
+    echo '' >> /etc/nginx/http.d/default.conf && \
+    echo '    location ~ \.php$ {' >> /etc/nginx/http.d/default.conf && \
+    echo '        fastcgi_pass 127.0.0.1:9000;' >> /etc/nginx/http.d/default.conf && \
+    echo '        fastcgi_index index.php;' >> /etc/nginx/http.d/default.conf && \
+    echo '        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;' >> /etc/nginx/http.d/default.conf && \
+    echo '        include fastcgi_params;' >> /etc/nginx/http.d/default.conf && \
+    echo '    }' >> /etc/nginx/http.d/default.conf && \
+    echo '' >> /etc/nginx/http.d/default.conf && \
+    echo '    location ~ /\.(?!well-known).* {' >> /etc/nginx/http.d/default.conf && \
+    echo '        deny all;' >> /etc/nginx/http.d/default.conf && \
+    echo '    }' >> /etc/nginx/http.d/default.conf && \
+    echo '}' >> /etc/nginx/http.d/default.conf
 
 # Create startup script
-RUN cat > /start.sh << 'EOF'
-#!/bin/sh
-php-fpm -D
-nginx -g "daemon off;"
-EOF
-
-RUN chmod +x /start.sh
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'php-fpm -D' >> /start.sh && \
+    echo 'nginx -g "daemon off;"' >> /start.sh && \
+    chmod +x /start.sh
 
 EXPOSE 80
 
