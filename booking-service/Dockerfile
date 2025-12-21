@@ -29,13 +29,13 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Install dependencies
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 
 # Copy application files
 COPY . .
 
 # Complete composer setup
-RUN composer dump-autoload --optimize
+RUN composer dump-autoload --optimize --no-dev
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
