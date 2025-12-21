@@ -6,6 +6,7 @@ use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Marshaler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class BookingsController extends Controller
 {
@@ -13,6 +14,7 @@ class BookingsController extends Controller
     private Marshaler $marshaler;
     private string $bookingsTable;
     private string $roomsTable;
+    private string $weatherServiceUrl;
 
     public function __construct()
     {
@@ -24,6 +26,60 @@ class BookingsController extends Controller
         $this->marshaler = new Marshaler();
         $this->bookingsTable = env('DYNAMODB_BOOKING_TABLE', 'conference-booking-bookings-dev');
         $this->roomsTable = env('DYNAMODB_ROOM_TABLE', 'conference-booking-rooms-dev');
+        $this->weatherServiceUrl = env('WEATHER_SERVICE_URL', 'http://localhost:8001');
+    }
+
+    /**
+     * Calculate additional charge based on temperature difference from 21°C.
+     */
+    private function calculateTemperatureCharge(float $temperature, float $basePrice): array
+    {
+        $difference = abs($temperature - 21);
+        $chargePercentage = 0;
+
+        if ($difference >= 20) {
+            $chargePercentage = 50;
+        } elseif ($difference >= 10) {
+            $chargePercentage = 30;
+        } elseif ($difference >= 5) {
+            $chargePercentage = 20;
+        } elseif ($difference >= 2) {
+            $chargePercentage = 10;
+        }
+
+        $additionalCharge = ($basePrice * $chargePercentage) / 100;
+
+        return [
+            'temperature' => $temperature,
+            'difference' => round($difference, 1),
+            'charge_percentage' => $chargePercentage,
+            'additional_charge' => round($additionalCharge, 2),
+        ];
+    }
+
+    /**
+     * Get temperature from weather service.
+     */
+    private function getTemperature(string $location, string $date): ?float
+    {
+        try {
+            $token = request()->bearerToken();
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->get($this->weatherServiceUrl . '/api/weather', [
+                'location' => $location,
+                'date' => $date,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['temperature'] ?? null;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**
@@ -66,6 +122,68 @@ class BookingsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to retrieve bookings',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get booking price breakdown with weather charge.
+     */
+    public function getPriceBreakdown(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'location' => 'required|string',
+            'date' => 'required|date_format:Y-m-d',
+            'roomName' => 'required|string',
+        ]);
+
+        try {
+            // 1. Get room details
+            $roomResult = $this->dynamodb->getItem([
+                'TableName' => $this->roomsTable,
+                'Key' => $this->marshaler->marshalItem([
+                    'location' => $validated['location'],
+                    'roomName' => $validated['roomName'],
+                ]),
+            ]);
+
+            if (!isset($roomResult['Item'])) {
+                return response()->json([
+                    'error' => 'Room not found',
+                ], 404);
+            }
+
+            $room = $this->marshaler->unmarshalItem($roomResult['Item']);
+            $basePrice = $room['price'];
+
+            // 2. Get temperature and calculate additional charge
+            $temperature = $this->getTemperature($validated['location'], $validated['date']);
+            
+            if ($temperature === null) {
+                return response()->json([
+                    'error' => 'Unable to fetch weather data for this location and date',
+                ], 404);
+            }
+
+            $weatherCharge = $this->calculateTemperatureCharge($temperature, $basePrice);
+            $totalPrice = $basePrice + $weatherCharge['additional_charge'];
+
+            return response()->json([
+                'room_name' => $validated['roomName'],
+                'location' => $validated['location'],
+                'date' => $validated['date'],
+                'base_price' => $basePrice,
+                'temperature' => $weatherCharge['temperature'],
+                'temperature_difference' => $weatherCharge['difference'],
+                'weather_charge_percentage' => $weatherCharge['charge_percentage'],
+                'weather_charge' => $weatherCharge['additional_charge'],
+                'total_price' => round($totalPrice, 2),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to calculate price',
                 'message' => $e->getMessage(),
             ], 500);
         }
@@ -127,14 +245,29 @@ class BookingsController extends Controller
                 ], 409);
             }
 
-            // 3. Create booking
+            // 3. Get temperature and calculate total price
+            $basePrice = $room['price'];
+            $temperature = $this->getTemperature($validated['location'], $validated['date']);
+            
+            $totalPrice = $basePrice;
+            $weatherCharge = 0;
+
+            if ($temperature !== null) {
+                $weatherData = $this->calculateTemperatureCharge($temperature, $basePrice);
+                $weatherCharge = $weatherData['additional_charge'];
+                $totalPrice = $basePrice + $weatherCharge;
+            }
+
+            // 4. Create booking
             $booking = [
                 'locationDate' => $locationDate,
                 'roomName' => $validated['roomName'],
                 'location' => $validated['location'],
                 'date' => $validated['date'],
                 'userId' => $userId,
-                'price' => $room['price'],
+                'basePrice' => $basePrice,
+                'weatherCharge' => round($weatherCharge, 2),
+                'price' => round($totalPrice, 2),
                 'createdAt' => now()->toIso8601String(),
             ];
 
