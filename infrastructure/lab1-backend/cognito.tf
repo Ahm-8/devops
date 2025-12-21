@@ -81,8 +81,8 @@ resource "aws_cognito_user_pool_client" "main" {
     refresh_token = "days"
   }
 
-  # Generate client secret (required for ALB authentication)
-  generate_secret = true
+  # No client secret for frontend apps (SPAs)
+  generate_secret = false
 
   # Read/write attributes
   read_attributes  = ["email", "name", "email_verified"]

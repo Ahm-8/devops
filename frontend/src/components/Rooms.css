@@ -1,0 +1,86 @@
+.rooms-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.rooms-container h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #555;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.search-btn {
+  padding: 0.5rem 1.5rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.search-btn:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.info-message {
+  padding: 0.75rem;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  padding: 0.75rem;
+  background: #fee;
+  color: #c33;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.book-btn {
+  padding: 0.5rem 1rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.book-btn:hover {
+  background: #45a049;
+}

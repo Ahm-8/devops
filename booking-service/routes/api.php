@@ -11,6 +11,7 @@ Route::get('/rooms/available', [RoomsController::class, 'getAvailableRooms']);
 // Protected routes (Cognito auth required)
 Route::middleware('cognito')->group(function () {
     Route::get('/bookings', [BookingsController::class, 'getBookings']);
+    Route::get('/bookings/price-breakdown', [BookingsController::class, 'getPriceBreakdown']);
     Route::post('/bookings', [BookingsController::class, 'createBooking']);
     Route::delete('/bookings', [BookingsController::class, 'deleteBooking']);
 });

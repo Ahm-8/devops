@@ -55,13 +55,8 @@ jobs:
             --service ${{ env.ECS_SERVICE }} \
             --force-new-deployment
 
-      - name: Wait for deployment to complete
-        run: |
-          aws ecs wait services-stable \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services ${{ env.ECS_SERVICE }}
-
       - name: Deployment complete
         run: |
-          echo "🚀 Weather service deployed successfully!"
+          echo "🚀 Weather service deployment triggered successfully!"
           echo "Image: ${{ steps.build-image.outputs.image }}"
+          echo "Note: Check AWS Console to verify deployment status (Learner Lab restricts service monitoring)"
