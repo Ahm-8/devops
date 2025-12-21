@@ -9,9 +9,9 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: conference-booking-service
+  ECR_REPOSITORY: conference-booking-booking-service
   ECS_CLUSTER: conference-booking-cluster-dev
-  ECS_SERVICE: conference-booking-service-dev
+  ECS_SERVICE: conference-booking-booking-service-dev
 
 jobs:
   deploy:
