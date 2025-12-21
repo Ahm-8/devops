@@ -15,6 +15,7 @@ jobs:
   deploy:
     name: Build and Deploy Frontend
     runs-on: ubuntu-latest
+    environment: AWS
     
     steps:
       - name: Checkout code
