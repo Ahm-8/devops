@@ -16,7 +16,7 @@ resource "aws_lb" "booking_service" {
 
 # Target Group for Booking Service
 resource "aws_lb_target_group" "booking_service" {
-  name        = "booking-tg-${var.environment}"
+  name_prefix = "book-"
   port        = var.booking_service_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -34,6 +34,10 @@ resource "aws_lb_target_group" "booking_service" {
   }
 
   deregistration_delay = 30
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   tags = {
     Name = "${var.project_name}-booking-tg-${var.environment}"
@@ -70,7 +74,7 @@ resource "aws_lb" "weather_service" {
 
 # Target Group for Weather Service
 resource "aws_lb_target_group" "weather_service" {
-  name        = "weather-tg-${var.environment}"
+  name_prefix = "weath-"
   port        = var.weather_service_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -88,6 +92,10 @@ resource "aws_lb_target_group" "weather_service" {
   }
 
   deregistration_delay = 30
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   tags = {
     Name = "${var.project_name}-weather-tg-${var.environment}"

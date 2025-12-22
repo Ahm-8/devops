@@ -31,13 +31,13 @@ variable "availability_zones" {
 variable "booking_service_port" {
   description = "Port for booking service"
   type        = number
-  default     = 8000
+  default     = 80
 }
 
 variable "weather_service_port" {
   description = "Port for weather service"
   type        = number
-  default     = 8001
+  default     = 80
 }
 
 variable "enable_cognito" {
