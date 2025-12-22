@@ -25,13 +25,13 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, json, openssl
           coverage: none
 
       - name: Install Composer dependencies
         working-directory: ./weather-service
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-progress
 
       - name: Run PHPUnit tests
         working-directory: ./weather-service
