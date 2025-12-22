@@ -62,6 +62,15 @@
   margin-bottom: 1rem;
 }
 
+.info-message {
+  padding: 0.75rem;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
 .submit-btn {
   width: 100%;
   padding: 0.75rem;

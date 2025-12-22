@@ -35,6 +35,44 @@ export const signUp = (email, password, name) => {
   });
 };
 
+export const confirmSignUp = (email, code) => {
+  return new Promise((resolve, reject) => {
+    const userData = {
+      Username: email,
+      Pool: userPool,
+    };
+
+    const cognitoUser = new CognitoUser(userData);
+
+    cognitoUser.confirmRegistration(code, true, (err, result) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(result);
+    });
+  });
+};
+
+export const resendConfirmationCode = (email) => {
+  return new Promise((resolve, reject) => {
+    const userData = {
+      Username: email,
+      Pool: userPool,
+    };
+
+    const cognitoUser = new CognitoUser(userData);
+
+    cognitoUser.resendConfirmationCode((err, result) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(result);
+    });
+  });
+};
+
 export const signIn = (email, password) => {
   return new Promise((resolve, reject) => {
     const authenticationData = {
