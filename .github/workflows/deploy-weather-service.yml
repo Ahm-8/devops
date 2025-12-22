@@ -14,10 +14,34 @@ env:
   ECS_SERVICE: conference-booking-weather-service-dev
 
 jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, openssl
+          coverage: none
+
+      - name: Install Composer dependencies
+        working-directory: ./weather-service
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run PHPUnit tests
+        working-directory: ./weather-service
+        run: ./vendor/bin/phpunit --testdox
+
   deploy:
     name: Build and Deploy Weather Service
     runs-on: ubuntu-latest
     environment: AWS
+    needs: test
     
     steps:
       - name: Checkout code

@@ -78,6 +78,14 @@ resource "aws_ecs_task_definition" "booking_service" {
         {
           name  = "DYNAMODB_WEATHER_TABLE"
           value = aws_dynamodb_table.weather.name
+        },
+        {
+          name  = "COGNITO_USER_POOL_ID"
+          value = var.enable_cognito ? aws_cognito_user_pool.main[0].id : ""
+        },
+        {
+          name  = "CACHE_STORE"
+          value = "file"
         }
       ]
 
@@ -140,6 +148,14 @@ resource "aws_ecs_task_definition" "weather_service" {
         {
           name  = "DYNAMODB_WEATHER_TABLE"
           value = aws_dynamodb_table.weather.name
+        },
+        {
+          name  = "COGNITO_USER_POOL_ID"
+          value = var.enable_cognito ? aws_cognito_user_pool.main[0].id : ""
+        },
+        {
+          name  = "CACHE_STORE"
+          value = "file"
         }
       ]
 
