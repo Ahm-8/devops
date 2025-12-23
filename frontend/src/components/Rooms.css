@@ -6,7 +6,10 @@
 
 .rooms-container h2 {
   margin-bottom: 1.5rem;
-  color: #333;
+  color: #2563eb;
+  font-size: 2rem;
+  border-bottom: 3px solid #2563eb;
+  padding-bottom: 0.5rem;
 }
 
 .filters {
